@@ -1,4 +1,5 @@
-from app import Habit
+from app import Habit, app, User, db
+from datetime import date
 
 def test_add_habit(client, auth):
     # Log in dummy tester
