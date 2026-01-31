@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+
 # Set unique key to protect user data
 app.secret_key = os.getenv("SECRET_KEY")
 
@@ -20,7 +21,7 @@ if os.environ.get('FLASK_ENV') == 'TESTING':
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 else:
     # Connect postgres database to Flask
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://postgres:{db_password}@localhost/habittracker"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://postgres:{db_password}@127.0.0.1/habittracker"
 
 # Initiate SQLAlchemy to communicate with database
 db = SQLAlchemy(app)
@@ -44,7 +45,7 @@ class Habit(db.Model):
     date_created = db.Column(db.Date(), nullable=False)
 
     # Create relationship between ActivityLog and Habit table
-    logs = db.relationship('ActivityLog', backref='habit', lazy='dynamic')
+    logs = db.relationship('ActivityLog', backref='habit', lazy='dynamic', cascade='all, delete-orphan')
 
 
 
