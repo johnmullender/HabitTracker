@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{%block content%}
+<h1> Welcome {{User}}!</h1>
+<form action="/" method="POST">
+        <input type="text" name="new_habit" placeholder="Enter a new habit">
+    <button type="submit">Add Habit</button>
+</form>
+<h2>Habits</h2>
+<ul>
+    {% for habit in habits %}
+    <li>
+        <a href="{{url_for('stats', id=habit.id)}}">{{ habit.name }}</a> ({{ habit.streak }} day streak)
+        {% if habit.last_done == today %}
+        <span>Completed Today!</span>
+        {% else %}
+            <form style = display:inline action="{{ url_for('mark_done', id=habit.id) }}" method="POST">
+                <button type="submit">Complete</button>
+            </form>
+        {% endif %}
+        <form style = display:inline action="{{ url_for('delete_habit', id=habit.id) }}" method="POST">
+            <button type="submit">Delete</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+<h2>Friends</h2>
+<ul>
+    {% for friend in user.followed %}
+    <li>
+        <a href="{{url_for('profile', username=friend.username)}}">{{ friend.username }}</a>
+        <form style = 'display:inline' action = "{{url_for('unfollow', username=friend.username) }}" method="POST">
+            <button type="submit">Unfollow</button>
+        </form>
+    </li>
+    {% else %}
+        <li>No friends found</li>
+    {% endfor %}
+</ul>
+{% endblock %}

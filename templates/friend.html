@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{friend.username}}'s Habits</h1>
+<ul>
+    {% for habit in habits %}
+    <li>
+        {{habit.name}} ({{habit.streak}} day streak)
+        {% if habit.last_done == today %}
+        <span>Completed Today!</span>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

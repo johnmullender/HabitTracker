@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ habit }}</h1>
+<p>Total count: {{ count }}</p>
+<p>Completion rate: {{ completion_rate }}%</p>
+<h3>Daily Stats:</h3>
+    <p>Monday: {{ daily_stats[0] }}</p>
+    <p>Tuesday: {{ daily_stats[1] }}</p>
+    <p>Wednesday: {{ daily_stats[2] }}</p>
+    <p>Thursday: {{ daily_stats[3] }}</p>
+    <p>Friday: {{ daily_stats[4] }}</p>
+    <p>Saturday: {{ daily_stats[5] }}</p>
+    <p>Sunday: {{ daily_stats[6] }}</p>
+{% endblock %}

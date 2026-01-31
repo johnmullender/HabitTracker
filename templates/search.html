@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Search For Friends</h1>
+<form method="POST" action="{{ url_for('search') }}">
+    <input type="text" name="username" placeholder="Enter a username">
+    <br>
+    <button type="submit">Search</button>
+</form>
+<ul>
+    {% for user in results %}
+        <li>{{ user.username }}
+            <form style = 'display:inline' action = "{{ url_for('follow', username=user.username) }}" method="POST">
+                <button type="submit">Follow</button>
+            </form>
+        </li>
+        {% else %}
+            <li>No users found</li>
+    {% endfor %}
+</ul>
+{% endblock %}

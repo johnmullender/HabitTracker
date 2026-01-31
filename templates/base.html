@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<nav>
+    <a href="{{ url_for('home') }}">Home</a> |
+    <a href="{{ url_for('search') }}">Search</a> |
+    {% if "user_id" in session %}
+    <a href="{{ url_for('logout') }}">Logout</a>
+    {% endif %}
+    <hr>
+</nav>
+<body>
+    <h1>Habit Tracker</h1>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div>
+            <p>{{ message }}</p>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% block content %}
+    {% endblock %}
+</body>
+</html>
