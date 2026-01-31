@@ -88,6 +88,11 @@ def register():
             flash("Username must consist only of letters and numbers")
             return redirect(url_for("register"))
 
+        # Make sure username is not too long
+        if len(username) > 30:
+            flash("Username must be less than 30 characters")
+            return redirect(url_for("register"))
+
         # Check if username is already taken
         existing_user = User.query.filter(func.lower(User.username) == username.lower()).first()
         if existing_user is not None:
