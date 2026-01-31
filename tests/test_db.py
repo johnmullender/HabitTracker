@@ -2,7 +2,6 @@ from app import db, User, Habit
 from datetime import date
 
 def test_habit_creation(client):
-    print(db.engine.url)
     user = User(username='Tim', password= 'password')
     db.session.add(user)
     db.session.commit()
