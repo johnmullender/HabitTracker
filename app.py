@@ -81,7 +81,7 @@ def register():
     # Check if data is being received from webpage
     if request.method == "POST":
         username = request.form["username"].strip()
-        password = request.form["password"].strip()
+        password = request.form["password"]
 
         # Make sure username is valid
         if len(username) < 1 or not username.isalnum():
