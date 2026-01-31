@@ -8,6 +8,17 @@ def test_register_user(client):
     assert User.query.filter_by(username='tester').count() == 1
 
 
+def test_register_duplicate(client):
+    # Register a dummy user
+    client.post('/register', data={'username': 'tester', 'password': '123'})
+
+    # Register a duplicate
+    response = client.post('/register', data={'username': 'tester', 'password': '123'}, follow_redirects=True)
+
+    # Should flash error message
+    assert b"An account with that username already exists" in response.data
+
+
 def test_login_happy(client):
     # Create a User
     client.post('/register', data={'username': 'tester', 'password': '123'})
