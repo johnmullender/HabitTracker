@@ -73,3 +73,16 @@ def test_whitespace_registration(client):
     assert b'Username must consist only of letters and numbers' in response.data
     assert db.session.query(User).count() == 0
 
+
+def test_case_insensitive_login(client):
+    client.post('/register', data={'username': 'TestUser', 'password': '123'})
+    # User attempts to login with lowercase username
+    response = client.post('/login', data={'username': 'testuser', 'password': '123'}, follow_redirects=True)
+    assert b'Welcome' in response.data
+    assert db.session.query(User).count() == 1
+
+
+def test_long_username_registration(client):
+    response = client.post('/register', data={'username': 'a' * 300, 'password': '123'}, follow_redirects=True)
+    assert b'Username must be less than 30 characters' in response.data
+    assert db.session.query(User).count() == 0
