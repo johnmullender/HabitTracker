@@ -67,3 +67,9 @@ def test_xss_registration(client):
     assert db.session.query(User).count() == 0
 
 
+def test_whitespace_registration(client):
+    # Test whitespace username attempt
+    response = client.post('/register', data={'username': '        ', 'password': '123'}, follow_redirects=True)
+    assert b'Username must consist only of letters and numbers' in response.data
+    assert db.session.query(User).count() == 0
+
