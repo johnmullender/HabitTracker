@@ -128,7 +128,7 @@ def login():
     # Check if data is being received from webpage
     if request.method == "POST":
         username = request.form["username"].strip()                                        # Store user input as username
-        password = request.form["password"].strip()                                        #      and password
+        password = request.form["password"]                                       #      and password
         user = User.query.filter(func.lower(User.username) == username.lower()).first()                    # Find first instance of username in User table, store User object in variable
 
         # Check if user exists and password is valid
