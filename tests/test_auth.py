@@ -1,4 +1,4 @@
-from app import User
+from app import User, db
 
 def test_register_user(client):
     # Create a User
