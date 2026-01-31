@@ -175,7 +175,7 @@ def mark_done(id):
     habit = db.session.get(Habit, id)                                             #Find habit by ID in database
 
     # Check if habit exists and if user owns habit
-    if habit and habit.user_id == session["user_id"]:
+    if habit and 'user_id' in session and habit.user_id == session["user_id"]:
         yesterday = date.today() - timedelta(days=1)                        # Define yesterday for streak logic
 
         # If this is users first time logging habit
