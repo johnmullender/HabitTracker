@@ -22,7 +22,7 @@ else:
     # Connect postgres database to Flask
     app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://postgres:{db_password}@localhost/habittracker"
 
-# Initiate SQLALchemy to communicate with database
+# Initiate SQLAlchemy to communicate with database
 db = SQLAlchemy(app)
 
 
