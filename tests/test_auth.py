@@ -45,3 +45,25 @@ def test_unauthorized_access(client):
     response = client.get('/', follow_redirects= True)
     assert b"Create An Account" in response.data
 
+
+def test_special_char_registration(client):
+    # Test basic special characters
+    response = client.post('/register', data={'username': 'test!@#^&%$&^', 'password': '123'}, follow_redirects=True)
+    assert b'Username must consist only of letters and numbers' in response.data
+    assert db.session.query(User).count() == 0
+
+
+def test_sql_injection_registration(client):
+    # Test SQL injection
+    response = client.post('/register', data= {'username': "DROP TABLE users:--", 'password': '123'}, follow_redirects=True)
+    assert b'Username must consist only of letters and numbers' in response.data
+    assert db.session.query(User).count() == 0
+
+
+def test_xss_registration(client):
+    # Test malicious username attempt
+    response = client.post('/register', data={"username": '<script>', 'password': '123'}, follow_redirects=True)
+    assert b'Username must consist only of letters and numbers' in response.data
+    assert db.session.query(User).count() == 0
+
+
