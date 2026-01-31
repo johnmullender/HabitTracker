@@ -2,7 +2,7 @@ from app import User
 
 def test_register_user(client):
     # Create a User
-    client.post('/register', data={'username': 'tester', 'password': 'testpass'})
+    client.post('/register', data={'username': 'tester', 'password': '123'})
 
     # Check database to see if they exist
     assert User.query.filter_by(username='tester').count() == 1
