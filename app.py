@@ -119,7 +119,7 @@ def login():
     if request.method == "POST":
         username = request.form["username"].strip()                                        # Store user input as username
         password = request.form["password"].strip()                                        #      and password
-        user = User.query.filter_by(username= username).first()                     # Find first instance of username in User table, store User object in variable
+        user = User.query.filter(func.lower(User.username) == username.lower()).first()                    # Find first instance of username in User table, store User object in variable
 
         # Check if user exists and password is valid
         if user and check_password_hash(user.password, password):
