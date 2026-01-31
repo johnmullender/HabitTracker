@@ -86,3 +86,28 @@ def test_long_username_registration(client):
     response = client.post('/register', data={'username': 'a' * 300, 'password': '123'}, follow_redirects=True)
     assert b'Username must be less than 30 characters' in response.data
     assert db.session.query(User).count() == 0
+
+
+def test_short_password_registration(client):
+    response = client.post('/register', data={'username': 'tester', 'password': '1'}, follow_redirects=True)
+    assert b'Password must be between 8 and 64 characters long' in response.data
+    assert db.session.query(User).count() == 0
+
+
+def test_long_password_registration(client):
+    response = client.post('/register', data={'username': 'tester', 'password': 'a' * 65}, follow_redirects=True)
+    assert b'Password must be between 8 and 64 characters long' in response.data
+    assert db.session.query(User).count() == 0
+
+
+def test_empty_password_registration(client):
+    response = client.post('/register', data={'username': 'tester', 'password': '             '}, follow_redirects=True)
+    assert b'Password cannot be all whitespace' in response.data
+    assert db.session.query(User).count() == 0
+
+
+def test_password_hashing(client):
+    client.post('/register', data={'username': 'tester', 'password': 'password123'})
+    user = User.query.filter_by(username='tester').first()
+    assert user.password != 'password123'
+    assert ":" in user.password
