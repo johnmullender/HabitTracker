@@ -163,7 +163,7 @@ def delete_habit(id):
     habit = db.session.get(Habit, id)                             # Find habit by ID in database
 
     # Check if habit exists and if user owns habit
-    if habit and habit.user_id == session["user_id"]:
+    if habit and 'user_id' in session and habit.user_id == session["user_id"]:
         db.session.delete(habit)                            # Remove habit from database
         db.session.commit()                                 # Make database change official
     return redirect(url_for("home"))                        # Refresh home page (habit will no long appear)
