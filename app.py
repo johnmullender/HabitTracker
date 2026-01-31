@@ -209,7 +209,7 @@ def stats(id):
     stats_by_day = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0}
 
     # Make sure habit exists and user session is valid
-    if habit and habit.user_id == session['user_id']:
+    if habit and 'user_id' in session and habit.user_id == session['user_id']:
         # Get total count of users logs for habit
         count = habit.logs.count()
 
