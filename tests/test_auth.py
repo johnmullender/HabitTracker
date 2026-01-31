@@ -39,3 +39,9 @@ def test_login_sad(client):
 
     # Should stay on login page and show error
     assert response.status_code == 200
+
+
+def test_unauthorized_access(client):
+    response = client.get('/', follow_redirects= True)
+    assert b"Create An Account" in response.data
+
