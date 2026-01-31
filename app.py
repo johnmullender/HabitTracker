@@ -134,12 +134,12 @@ def home():
         return redirect(url_for("register"))                        # redirect user to register page (change this to login in future?)
 
     # Check if logged-in user exists in database
-    if User.query.get(session['user_id']) is None:
+    if db.session.get(User, session['user_id']) is None:
         session.pop("user_id", None)                                 # Clear invalid ID from browser
         return redirect(url_for("register"))                         # Send user to register page (change this to login in future?)
 
     # Save current user to pass to html
-    current_user = User.query.get(session['user_id'])
+    current_user = db.session.get(User, session['user_id'])
 
     # Allow user to create new habit
     if request.method == "POST":
@@ -159,7 +159,7 @@ def home():
 ### Create option for users to delete habits ###
 @app.route("/delete/<int:id>", methods=["GET", "POST"])
 def delete_habit(id):
-    habit = Habit.query.get(id)                             # Find habit by ID in database
+    habit = db.session.get(Habit, id)                             # Find habit by ID in database
 
     # Check if habit exists and if user owns habit
     if habit and habit.user_id == session["user_id"]:
@@ -171,7 +171,7 @@ def delete_habit(id):
 ### Create option for users to mark habit as complete ###
 @app.route("/done/<int:id>", methods=["POST"])
 def mark_done(id):
-    habit = Habit.query.get(id)                                             #Find habit by ID in database
+    habit = db.session.get(Habit, id)                                             #Find habit by ID in database
 
     # Check if habit exists and if user owns habit
     if habit and habit.user_id == session["user_id"]:
@@ -202,7 +202,7 @@ def mark_done(id):
 # Create /stats route for habit analytics
 @app.route("/stats/<int:id>", methods=["GET", "POST"])
 def stats(id):
-    habit = Habit.query.get(id)
+    habit = db.session.get(Habit, id)
 
     # Create dictionary to hold daily stats --> (0- mon, 1- tues, 3- wed, etc.) 
     stats_by_day = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0}
@@ -250,7 +250,7 @@ def search():
 @app.route("/follow/<username>", methods=["GET", "POST"])
 def follow(username):
     friend_user = User.query.filter_by(username= username).first()          # Fetch friends user object from user input
-    my_user = User.query.get(session['user_id'])                            # Fetch users id
+    my_user = db.session.get(User, session['user_id'])                            # Fetch users id
 
     # Check if friends user exists
     if friend_user:
@@ -276,7 +276,7 @@ def follow(username):
 @app.route("/unfollow/<username>", methods=["GET", "POST"])
 def unfollow(username):
     friend_user = User.query.filter_by(username= username).first()                  # Fetch friends User object from user input
-    my_user = User.query.get(session["user_id"])                                    # Fetch users id
+    my_user = db.session.get(User, session["user_id"])                                    # Fetch users id
 
     # Check if friends User exists
     if friend_user:
@@ -302,7 +302,7 @@ def unfollow(username):
 @app.route("/profile/<username>", methods=["GET", "POST"])
 def profile(username):
     friend_user = User.query.filter_by(username= username).first()
-    my_user = User.query.get(session['user_id'])
+    my_user = db.session.get(User, session['user_id'])
     today = date.today()
 
     # Make sure friend exists in database
