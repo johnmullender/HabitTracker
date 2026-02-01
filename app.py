@@ -344,4 +344,25 @@ def profile(username):
 
     # Check if friend is in users friends list
     if my_user.followed.filter_by(id=friend_user.id).first() is None:
-        flash("Follow {0} to see their habits".format(friend
+        flash("Follow {0} to see their habits".format(friend_user.username))
+        return redirect(url_for("home"))
+
+    # Find friends habits in database
+    habits = Habit.query.filter_by(user_id = friend_user.id).order_by(Habit.id).all()
+
+    # Send habit list to html
+    return render_template("friend.html", habits=habits, friend=friend_user, today=today)
+
+
+### Create /logout page and functionality ###
+@app.route("/logout", methods=["GET"])
+def logout():
+    session.pop("user_id", None)                            # Remove user credentials (will require log in next time)
+    return redirect(url_for("login"))                       # Redirect user to login page
+
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
