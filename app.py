@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
+from functools import wraps
 
 load_dotenv()
 
@@ -73,6 +74,17 @@ class User(db.Model):
         secondaryjoin=(id == followers.c.followed_id),                                # Match the followed column to their ID
         backref=db.backref('followers', lazy='dynamic'),                              # Create shortcut so my friends can see me in THEIR follower list
         lazy='dynamic')
+
+
+# Create wrapper function to authenticate users upon requests to visit routes
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        # Check if user is logged in
+        if "user_id" not in session:
+            return redirect(url_for("register"))
+        return f(*args, **kwargs)
+    return wrapper
 
 
 ### Create /register webpage functionality ###
@@ -143,11 +155,8 @@ def login():
 
 ### Create / webpage (home) and functionality ###
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def home():
-
-    # Check if user is logged in
-    if "user_id" not in session:
-        return redirect(url_for("register"))                        # redirect user to register page (change this to login in future?)
 
     # Check if logged-in user exists in database
     if db.session.get(User, session['user_id']) is None:
@@ -174,11 +183,12 @@ def home():
 
 ### Create option for users to delete habits ###
 @app.route("/delete/<int:id>", methods=["GET", "POST"])
+@login_required
 def delete_habit(id):
     habit = db.session.get(Habit, id)                             # Find habit by ID in database
 
     # Check if habit exists and if user owns habit
-    if habit and 'user_id' in session and habit.user_id == session["user_id"]:
+    if habit and habit.user_id == session["user_id"]:
         db.session.delete(habit)                            # Remove habit from database
         db.session.commit()                                 # Make database change official
     return redirect(url_for("home"))                        # Refresh home page (habit will no long appear)
@@ -186,11 +196,12 @@ def delete_habit(id):
 
 ### Create option for users to mark habit as complete ###
 @app.route("/done/<int:id>", methods=["POST"])
+@login_required
 def mark_done(id):
     habit = db.session.get(Habit, id)                                             #Find habit by ID in database
 
     # Check if habit exists and if user owns habit
-    if habit and 'user_id' in session and habit.user_id == session["user_id"]:
+    if habit and habit.user_id == session["user_id"]:
         yesterday = date.today() - timedelta(days=1)                        # Define yesterday for streak logic
 
         # If this is users first time logging habit
@@ -217,14 +228,15 @@ def mark_done(id):
 
 # Create /stats route for habit analytics
 @app.route("/stats/<int:id>", methods=["GET", "POST"])
+@login_required
 def stats(id):
     habit = db.session.get(Habit, id)
 
     # Create dictionary to hold daily stats --> (0- mon, 1- tues, 3- wed, etc.) 
     stats_by_day = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0}
 
-    # Make sure habit exists and user session is valid
-    if habit and 'user_id' in session and habit.user_id == session['user_id']:
+    # Make sure habit exists and is owned by user
+    if habit and habit.user_id == session['user_id']:
         # Get total count of users logs for habit
         count = habit.logs.count()
 
@@ -250,6 +262,7 @@ def stats(id):
 
 ### Provide a search function, allowing users to search for friends ###
 @app.route("/search", methods=["GET", "POST"])
+@login_required
 def search():
     result = []                                                                             # Initialize result as an empty list
 
@@ -264,6 +277,7 @@ def search():
 
 ### Allow users to follow others ###
 @app.route("/follow/<username>", methods=["GET", "POST"])
+@login_required
 def follow(username):
     friend_user = User.query.filter_by(username= username).first()          # Fetch friends user object from user input
     my_user = db.session.get(User, session['user_id'])                            # Fetch users id
@@ -290,6 +304,7 @@ def follow(username):
 
 ### Allow user to unfollow other users ###
 @app.route("/unfollow/<username>", methods=["GET", "POST"])
+@login_required
 def unfollow(username):
     friend_user = User.query.filter_by(username= username).first()                  # Fetch friends User object from user input
     my_user = db.session.get(User, session["user_id"])                                    # Fetch users id
@@ -316,6 +331,7 @@ def unfollow(username):
 
 ### Create a dashboard that displays friends habits
 @app.route("/profile/<username>", methods=["GET", "POST"])
+@login_required
 def profile(username):
     friend_user = User.query.filter_by(username= username).first()
     my_user = db.session.get(User, session['user_id'])
@@ -328,25 +344,4 @@ def profile(username):
 
     # Check if friend is in users friends list
     if my_user.followed.filter_by(id=friend_user.id).first() is None:
-        flash("Follow {0} to see their habits".format(friend_user.username))
-        return redirect(url_for("home"))
-
-    # Find friends habits in database
-    habits = Habit.query.filter_by(user_id = friend_user.id).order_by(Habit.id).all()
-
-    # Send habit list to html
-    return render_template("friend.html", habits=habits, friend=friend_user, today=today)
-
-
-### Create /logout page and functionality ###
-@app.route("/logout", methods=["GET"])
-def logout():
-    session.pop("user_id", None)                            # Remove user credentials (will require log in next time)
-    return redirect(url_for("login"))                       # Redirect user to login page
-
-
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+        flash("Follow {0} to see their habits".format(friend
