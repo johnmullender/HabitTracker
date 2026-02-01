@@ -96,23 +96,13 @@ def register():
         password = request.form["password"]
 
         # Make sure username is valid
-        if len(username) < 1 or not username.isalnum():
-            flash("Username must consist only of letters and numbers")
+        if len(username) < 1 or len(username) > 30 or not username.isalnum():
+            flash("Username must consist only of letters and numbers. Max 30 characters")
             return redirect(url_for("register"))
 
-        # Make sure password is valid length
-        if len(password) < 8 or len(password) > 64:
-            flash("Password must be between 8 and 64 characters long")
-            return redirect(url_for("register"))
-
-        # Make sure password is not only whitespace
-        if password.isspace():
-            flash("Password cannot be all whitespace")
-            return redirect(url_for("register"))
-
-        # Make sure username is not too long
-        if len(username) > 30:
-            flash("Username must be less than 30 characters")
+        # Make sure password is valid
+        if len(password) < 8 or len(password) > 64 or password.isspace():
+            flash("Password must be between 8 and 64 characters long. Password cannot be all whitespace")
             return redirect(url_for("register"))
 
         # Check if username is already taken

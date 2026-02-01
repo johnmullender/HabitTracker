@@ -1,4 +1,5 @@
 from app import User, db, app
+import pytest
 
 ### Test basic User registration ###
 def test_register_user(client):
@@ -45,37 +46,12 @@ def test_login_sad(client):
     assert response.status_code == 200
 
 
-### Test user cannot access home page without logging in ###
-def test_unauthorized_access(client):
-    response = client.get('/', follow_redirects= True)
-    assert b"Create An Account" in response.data
-
-
-### Test basic special characters in username registration ###
-def test_special_char_registration(client):
-    response = client.post('/register', data={'username': 'test!@#^&%$&^', 'password': '12345678'}, follow_redirects=True)
-    assert b'Username must consist only of letters and numbers' in response.data
-    assert db.session.query(User).count() == 0
-
-
-### Test SQL in username during registration ###
-def test_sql_injection_registration(client):
-    response = client.post('/register', data= {'username': "DROP TABLE users:--", 'password': '12345678'}, follow_redirects=True)
-    assert b'Username must consist only of letters and numbers' in response.data
-    assert db.session.query(User).count() == 0
-
-
-### Test HTML in username during registration ###
-def test_xss_registration(client):
-    response = client.post('/register', data={"username": '<script>', 'password': '12345678'}, follow_redirects=True)
-    assert b'Username must consist only of letters and numbers' in response.data
-    assert db.session.query(User).count() == 0
-
-
-### Test whitespace username during registration ###
-def test_whitespace_registration(client):
-    response = client.post('/register', data={'username': '        ', 'password': '12345678'}, follow_redirects=True)
-    assert b'Username must consist only of letters and numbers' in response.data
+### Test invalid usernames ###
+@pytest.mark.parametrize('test_username', ['test^&^%$#$$%^&%', 'DROP TABLE users:--',
+                                            '<script>', '          ', 'a' * 40])
+def test_invalid_usernames(client, test_username):
+    response = client.post('/register', data={'username': test_username, 'password': '12345678'}, follow_redirects= True)
+    assert b'Username must consist only of letters and numbers. Max 30 characters' in response.data
     assert db.session.query(User).count() == 0
 
 
@@ -88,31 +64,11 @@ def test_case_insensitive_login(client):
     assert db.session.query(User).count() == 1
 
 
-### Test username > 30 chars during registration ###
-def test_long_username_registration(client):
-    response = client.post('/register', data={'username': 'a' * 300, 'password': '12345678'}, follow_redirects=True)
-    assert b'Username must be less than 30 characters' in response.data
-    assert db.session.query(User).count() == 0
-
-
-### Test password < 8 chars during registration ###
-def test_short_password_registration(client):
-    response = client.post('/register', data={'username': 'tester', 'password': '1'}, follow_redirects=True)
-    assert b'Password must be between 8 and 64 characters long' in response.data
-    assert db.session.query(User).count() == 0
-
-
-### Test password > 64 chars during registration ###
-def test_long_password_registration(client):
-    response = client.post('/register', data={'username': 'tester', 'password': 'a' * 65}, follow_redirects=True)
-    assert b'Password must be between 8 and 64 characters long' in response.data
-    assert db.session.query(User).count() == 0
-
-
-### Test empty password during registration ###
-def test_empty_password_registration(client):
-    response = client.post('/register', data={'username': 'tester', 'password': '             '}, follow_redirects=True)
-    assert b'Password cannot be all whitespace' in response.data
+### Test invalid passwords ###
+@pytest.mark.parametrize('test_password', ['1', 'a' * 65, '               '])
+def test_invalid_passwords(client, test_password):
+    response = client.post('/register', data={'username': 'tester', 'password': test_password}, follow_redirects= True)
+    assert b'Password must be between 8 and 64 characters long. Password cannot be all whitespace' in response.data
     assert db.session.query(User).count() == 0
 
 
@@ -152,42 +108,14 @@ def test_logout_cannot_access_home(client, auth):
     assert b'Create An Account To Get Started!' in response.data
 
 
-### Test users are not able to access their profile without signing in ###
-def test_unauthorized_profile_access(client):
-    # Create a test user in database
-    with app.app_context():
-        tester = User(username= 'tester', password= '12345678')
-        db.session.add(tester)
-        db.session.commit()
-
-    # User attempts to access test users profile without signing in
-    response = client.post('/profile/tester', follow_redirects= True)
-    assert b'Create An Account To Get Started!' in response.data
+### Test user cannot access home page without logging in ###
+def test_unauthorized_access(client):
+    response = client.get('/', follow_redirects= True)
+    assert b"Create An Account" in response.data
 
 
-### Test users cannot access search page without logging in ###
-def test_unauthorized_search_access(client):
-    response = client.post('/search', follow_redirects= True)
-    assert b'Create An Account To Get Started!' in response.data
-
-
-### Test users cannot follow another user without signing in ###
-def test_unauthorized_follow_access(client):
-    with app.app_context():
-        tester = User(username= 'tester', password= '12345678')
-        db.session.add(tester)
-        db.session.commit()
-
-    response = client.post('/follow/tester', follow_redirects= True)
-    assert b'Create An Account To Get Started!' in response.data
-
-
-### Test users cannot unfollow another user without signing in ###
-def test_unauthorized_unfollow_access(client):
-    with app.app_context():
-        tester = User(username= 'tester', password= '12345678')
-        db.session.add(tester)
-        db.session.commit()
-
-    response = client.post('/unfollow/tester', follow_redirects= True)
+### Test attempts to gain unauthorized access to various routes ###
+@pytest.mark.parametrize('route', ['/profile/tester', 'search', '/follow/tester', '/unfollow/tester'])
+def test_unauthorized_access(client, route):
+    response= client.post(route, follow_redirects= True)
     assert b'Create An Account To Get Started!' in response.data
