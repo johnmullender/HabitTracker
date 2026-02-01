@@ -1,4 +1,4 @@
-from app import User, db
+from app import User, db, app
 
 def test_register_user(client):
     # Create a User
@@ -111,3 +111,66 @@ def test_password_hashing(client):
     user = User.query.filter_by(username='tester').first()
     assert user.password != 'password123'
     assert ":" in user.password
+
+
+def test_invalid_session_id(client):
+    # Give dummy user invalid session id
+    with client.session_transaction() as sess:
+        sess['user_id'] = 99999
+
+    # Make sure user gets redirected to register page
+    response = client.post('/', follow_redirects= True)
+    assert b'Create An Account To Get Started!' in response.data
+
+    # Ensure key invalid key is removed from session
+    with client.session_transaction() as sess:
+        assert 'user_id' not in sess
+
+
+def test_logout_cannot_access_home(client, auth):
+    # Log in test user
+    auth.login('tester', '12345678')
+
+    # Log test user out
+    client.get('/logout', follow_redirects= True)
+
+    # Logged out user attempts to access home page
+    response = client.get('/', follow_redirects= True)
+    assert b'Create An Account To Get Started!' in response.data
+
+
+def test_unauthorized_profile_access(client):
+    # Create a test user in database
+    with app.app_context():
+        tester = User(username= 'tester', password= '12345678')
+        db.session.add(tester)
+        db.session.commit()
+
+    # User attempts to access test users profile without signing in
+    response = client.post('/profile/tester', follow_redirects= True)
+    assert b'Create An Account To Get Started!' in response.data
+
+
+def test_unauthorized_search_access(client):
+    response = client.post('/search', follow_redirects= True)
+    assert b'Create An Account To Get Started!' in response.data
+
+
+def test_unauthorized_follow_access(client):
+    with app.app_context():
+        tester = User(username= 'tester', password= '12345678')
+        db.session.add(tester)
+        db.session.commit()
+
+    response = client.post('/follow/tester', follow_redirects= True)
+    assert b'Create An Account To Get Started!' in response.data
+
+
+def test_unauthorized_unfollow_access(client):
+    with app.app_context():
+        tester = User(username= 'tester', password= '12345678')
+        db.session.add(tester)
+        db.session.commit()
+
+    response = client.post('/unfollow/tester', follow_redirects= True)
+    assert b'Create An Account To Get Started!' in response.data
