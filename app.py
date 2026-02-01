@@ -168,7 +168,16 @@ def home():
 
     # Allow user to create new habit
     if request.method == "POST":
-        habit = request.form["new_habit"]                                                           # Fetch user input
+        habit = request.form["new_habit"].rstrip()
+
+        # Make sure user input is valid
+        if len(habit) == 0:
+            flash("Habit cannot be empty")
+            return redirect(url_for("home"))
+        if len(habit) > 30:
+            flash("Habit cannot be more than 30 characters")
+            return redirect(url_for("home"))
+
         new_habit = Habit(name= habit, user_id=session["user_id"], date_created=date.today())      # Create new Habit object
         db.session.add(new_habit)                                                                    # Add new habit object to database
         db.session.commit()                                                                         # Save changes permanently to database
