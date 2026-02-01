@@ -1,4 +1,4 @@
-from app import Habit, app, User, db
+from app import Habit, app, User, db, ActivityLog
 from datetime import date, timedelta
 
 
@@ -266,5 +266,46 @@ def test_invalid_habit_stats(auth, client):
     # Tester attempts to view invalid habit id stats
     response = client.post('/stats/999', follow_redirects= True)
     assert b'Welcome' in response.data
+
+
+### Test deleting habit deletes all related logs ###
+def test_habit_deletion_deletes_logs(client, auth):
+    # Log in tester
+    auth.login('tester', '12345678')
+
+    # User creates habit
+    client.post('/', data={'new_habit': 'gym'})
+
+    with app.app_context():
+        habit = Habit.query.filter_by(name= 'gym').first()
+        habit_id = habit.id
+
+    # User logs habit
+    client.post(f'done/{habit_id}')
+
+    # Confirm log exists in db
+    with app.app_context():
+        assert ActivityLog.query.count() == 1
+
+    # User deletes habit
+    client.post(f'delete/{habit_id}')
+
+    # Db should have 0 logs
+    with app.app_context():
+        assert ActivityLog.query.count() == 0
+
+
+### Test date_created is set to correct date upon creation ###
+def test_habit_date_creation(client, auth):
+    # Log in tester
+    auth.login('tester', '12345678')
+
+    # User creates habit
+    client.post('/', data={'new_habit': 'gym'})
+
+    # Date created should be today
+    with app.app_context():
+        habit = Habit.query.filter_by(name= 'gym').first()
+        assert habit.date_created == date.today()
 
 
