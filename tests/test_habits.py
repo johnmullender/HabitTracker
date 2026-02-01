@@ -192,6 +192,7 @@ def test_streak_increment(client, auth):
 
 ### Test first habit log increments streak ###
 def test_null_habit_last_done(auth, client):
+    # Log in user
     auth.login('tester', '12345678')
 
     with app.app_context():
@@ -213,5 +214,57 @@ def test_null_habit_last_done(auth, client):
         assert habit.streak == 1
 
 
+### Test attempt to mark another user's habit as complete ###
+def test_complete_others_habit(auth, client):
+    # Log in attacker
+    auth.login('attacker', '12345678')
+
+    with app.app_context():
+        # Create victim and add to database
+        victim = User(username= 'victim', password= '12345678')
+        db.session.add(victim)
+        db.session.commit()
+        victim_habit = Habit(name= 'gym', date_created= date.today(), user_id= victim.id)
+        db.session.add(victim_habit)
+        db.session.commit()
+        victim_habit_id = victim_habit.id
+
+    # Attacker attempts to mark victims habit as complete
+    response = client.post(f'/done/{victim_habit_id}', follow_redirects= True)
+    assert b'Welcome' in response.data
+
+    with app.app_context():
+        habit = Habit.query.filter_by(name= 'gym').first()
+        assert habit.last_done is None
+
+
+### Test user attempt to view other users stats (do not follow each other)###
+def test_user_view_others_stats(client, auth):
+    # Log in attacker
+    auth.login('attacker', '12345678')
+
+    # Create victims habit and add to db
+    with app.app_context():
+        victim = User(username= 'victim', password= '12345678')
+        db.session.add(victim)
+        db.session.commit()
+        victim_habit = Habit(name= 'gym', date_created= date.today(), user_id= victim.id)
+        db.session.add(victim_habit)
+        db.session.commit()
+        victim_habit_id = victim_habit.id
+
+    response = client.post(f'/stats/{victim_habit_id}', follow_redirects= True)
+    assert b'gym' not in response.data
+    assert b'Welcome' in response.data
+
+
+### Test attempt to access stats with an invalid habit id ###
+def test_invalid_habit_stats(auth, client):
+    # Log in tester
+    auth.login('tester', '12345678')
+
+    # Tester attempts to view invalid habit id stats
+    response = client.post('/stats/999', follow_redirects= True)
+    assert b'Welcome' in response.data
 
 
