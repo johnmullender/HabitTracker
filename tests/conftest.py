@@ -18,7 +18,7 @@ def client():
         db.drop_all()
 
 
-# Create helper class to automatically logic test User
+# Create helper class to automatically log in test User
 class AuthActions:
     def __init__(self, client):
         self._client = client

@@ -290,7 +290,7 @@ def follow(username):
         # Check is user already follows the account they are trying to follow
         if my_user.followed.filter_by(id=friend_user.id).first() is not None:
             flash("You already follow this user")                                   # Tell user they already follow the user they input
-            return redirect(url_for("home"))                                        # Redirect to home
+            return redirect(url_for("home"))
         # If user makes valid attempt to follow friend
         my_user.followed.append(friend_user)                        # Append friend to users followed list in database
         db.session.commit()                                         # Make database change official
