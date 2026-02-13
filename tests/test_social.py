@@ -117,5 +117,3 @@ def test_search_functionality(client, auth, search_name, expected_response):
     assert expected_response in response.data
 
 
-
-

@@ -38,11 +38,11 @@ class ActivityLog(db.Model):
 ### Create Habit class / table -- creates and stores habits in database ###
 class Habit(db.Model):
     ### Set up database columns / attributes ###
-    id = db.Column(db.Integer, primary_key=True)                                           # Create unique ID for each habit
-    name = db.Column(db.String(100), nullable=False)                                       # Give each habit a name
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)              # Connect each habit to a user through user_id
-    last_done = db.Column(db.Date, nullable=True)                                          # Track when each habit was last completed
-    streak = db.Column(db.Integer, default=0, nullable=False)                              # Track streak for each habit
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    last_done = db.Column(db.Date, nullable=True)
+    streak = db.Column(db.Integer, default=0, nullable=False)
     date_created = db.Column(db.Date(), nullable=False)
 
     # Create relationship between ActivityLog and Habit table
@@ -51,28 +51,28 @@ class Habit(db.Model):
 
 
 ### Create "Bridge Table" that connects to User table -- track connections between Users ###
-followers = db.Table('followers',                                                               # Name table-- followers
+followers = db.Table('followers',
                      ### Create 2 IDs -- One for follower, following ####
-                     db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),            # ID of person DOING the following
-                     db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))             # ID of the person BEING followed
+                     db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
+                     db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
                      )
 
 
 ### Create User class / table -- creates and stores Users in database ###
 class User(db.Model):
     ### Set up table columns / attributes ###
-    id = db.Column(db.Integer, primary_key=True)                                                # Give each User a unique ID
-    username = db.Column(db.String(150), unique=True, nullable=False)                           # Store unique username for each User
-    password = db.Column(db.String(255), nullable=False)                                        # Store password for each User
-    habits = db.relationship("Habit", backref="owner")                                    # Find habits for each User
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    habits = db.relationship("Habit", backref="owner")
 
     ### Create relationship between User and followers table ###
     followed = db.relationship(
-        "User",                                                                 # Connection is from User table
-        secondary=followers,                                                          #     to followers table
-        primaryjoin=(id == followers.c.follower_id),                                  # Match my ID to the follower column
-        secondaryjoin=(id == followers.c.followed_id),                                # Match the followed column to their ID
-        backref=db.backref('followers', lazy='dynamic'),                              # Create shortcut so my friends can see me in THEIR follower list
+        "User",
+        secondary=followers,
+        primaryjoin=(id == followers.c.follower_id),
+        secondaryjoin=(id == followers.c.followed_id),
+        backref=db.backref('followers', lazy='dynamic'),
         lazy='dynamic')
 
 
@@ -116,10 +116,10 @@ def register():
 
         # Create User object using user input
         user = User(username = username, password = password)
-        db.session.add(user)                                                        # Add User object to database
-        db.session.commit()                                                         # Save changes permanently to database
-        session["user_id"] = user.id                                                # Create valid credentials for user
-        return redirect(url_for("home"))                                            # Redirect user to Home page
+        db.session.add(user)
+        db.session.commit()
+        session["user_id"] = user.id
+        return redirect(url_for("home"))
 
     return render_template("register.html")
 
@@ -129,14 +129,14 @@ def register():
 def login():
     # Check if data is being received from webpage
     if request.method == "POST":
-        username = request.form["username"].strip()                                        # Store user input as username
-        password = request.form["password"]                                       #      and password
-        user = User.query.filter(func.lower(User.username) == username.lower()).first()                    # Find first instance of username in User table, store User object in variable
+        username = request.form["username"].strip()
+        password = request.form["password"]
+        user = User.query.filter(func.lower(User.username) == username.lower()).first()
 
         # Check if user exists and password is valid
         if user is not None and check_password_hash(user.password, password):
-            session["user_id"] = user.id                                               # Create valid credentials from user
-            return redirect(url_for("home"))                                           # Redirect user to home page
+            session["user_id"] = user.id
+            return redirect(url_for("home"))
 
         # Tell user if credentials they entered were invalid
         flash("Invalid Username or Password")
@@ -150,8 +150,8 @@ def home():
 
     # Check if logged-in user exists in database
     if db.session.get(User, session['user_id']) is None:
-        session.pop("user_id", None)                                 # Clear invalid ID from browser
-        return redirect(url_for("register"))                         # Send user to register page (change this to login in future?)
+        session.pop("user_id", None)
+        return redirect(url_for("register"))
 
     # Save current user to pass to html
     current_user = db.session.get(User, session['user_id'])
@@ -168,10 +168,10 @@ def home():
             flash("Habit cannot be more than 30 characters")
             return redirect(url_for("home"))
 
-        new_habit = Habit(name= habit, user_id=session["user_id"], date_created=date.today())      # Create new Habit object
-        db.session.add(new_habit)                                                                    # Add new habit object to database
-        db.session.commit()                                                                         # Save changes permanently to database
-        return redirect(url_for("home"))                                                            # Redirect user to home page
+        new_habit = Habit(name= habit, user_id=session["user_id"], date_created=date.today())
+        db.session.add(new_habit)
+        db.session.commit()
+        return redirect(url_for("home"))
 
     # Find users habits in database
     habits = Habit.query.filter_by(user_id=session["user_id"]).order_by(Habit.id).all()
@@ -184,45 +184,45 @@ def home():
 @app.route("/delete/<int:id>", methods=["GET", "POST"])
 @login_required
 def delete_habit(id):
-    habit = db.session.get(Habit, id)                             # Find habit by ID in database
+    habit = db.session.get(Habit, id)
 
     # Check if habit exists and if user owns habit
     if habit and habit.user_id == session["user_id"]:
-        db.session.delete(habit)                            # Remove habit from database
-        db.session.commit()                                 # Make database change official
-    return redirect(url_for("home"))                        # Refresh home page (habit will no long appear)
+        db.session.delete(habit)
+        db.session.commit()
+    return redirect(url_for("home"))
 
 
 ### Create option for users to mark habit as complete ###
 @app.route("/done/<int:id>", methods=["POST"])
 @login_required
 def mark_done(id):
-    habit = db.session.get(Habit, id)                                             #Find habit by ID in database
+    habit = db.session.get(Habit, id)
 
     # Check if habit exists and if user owns habit
     if habit and habit.user_id == session["user_id"]:
-        yesterday = date.today() - timedelta(days=1)                        # Define yesterday for streak logic
+        yesterday = date.today() - timedelta(days=1)
 
         # If this is users first time logging habit
         if habit.last_done is None:
-            habit.streak = 1                                                # Set habit streak to 1
+            habit.streak = 1
         # If habit was logged yesterday
         elif habit.last_done == yesterday:
-            habit.streak += 1                                               # Increment streak by 1
+            habit.streak += 1
         # If habit was already logged today
-        elif date.today() - habit.last_done == timedelta(days=0):           # Leave streak as is
+        elif date.today() - habit.last_done == timedelta(days=0):
             pass
         # if it has been > 1 day since user logged habit
         else:
-            habit.streak = 1                                                # Set streak to 1
+            habit.streak = 1
 
         # Add habit to ActivityLog table
         habit_log = ActivityLog(habit_id=habit.id, date=date.today())
         db.session.add(habit_log)
 
-        habit.last_done = date.today()                                      # Set today as day habit was last completed in database
-        db.session.commit()                                                 # Make change to database official
-    return redirect(url_for("home"))                                        # Refresh home page (habit will show status and streak)
+        habit.last_done = date.today()
+        db.session.commit()
+    return redirect(url_for("home"))
 
 
 # Create /stats route for habit analytics
@@ -263,14 +263,14 @@ def stats(id):
 @app.route("/search", methods=["GET", "POST"])
 @login_required
 def search():
-    result = []                                                                             # Initialize result as an empty list
+    result = []
 
     # Is the website sending us data?
     if request.method == "POST":
-        search_data = request.form["username"].lower()                                              # Store the users search data in a variable
+        search_data = request.form["username"].lower()
         # Did the user input a valid search?
         if len(search_data) > 0:
-            result = User.query.filter(func.lower(User.username).contains(search_data)).all()           # If so, return Users that match search
+            result = User.query.filter(func.lower(User.username).contains(search_data)).all()
     return render_template("search.html", results=result)
     
 
@@ -278,54 +278,54 @@ def search():
 @app.route("/follow/<username>", methods=["GET", "POST"])
 @login_required
 def follow(username):
-    friend_user = User.query.filter_by(username= username).first()          # Fetch friends user object from user input
-    my_user = db.session.get(User, session['user_id'])                            # Fetch users id
+    friend_user = User.query.filter_by(username= username).first()
+    my_user = db.session.get(User, session['user_id'])
 
     # Check if friends user exists
     if friend_user:
         # Make sure account does not belong to user
         if friend_user.id == session['user_id']:
-            flash("That username is associated with your account")                  # Tell user they cannot follow themselves
-            return redirect(url_for("home"))                                        # Redirect to home
+            flash("That username is associated with your account")
+            return redirect(url_for("home"))
         # Check is user already follows the account they are trying to follow
         if my_user.followed.filter_by(id=friend_user.id).first() is not None:
-            flash("You already follow this user")                                   # Tell user they already follow the user they input
+            flash("You already follow this user")
             return redirect(url_for("home"))
         # If user makes valid attempt to follow friend
-        my_user.followed.append(friend_user)                        # Append friend to users followed list in database
-        db.session.commit()                                         # Make database change official
-        flash("User followed successfully")                         # Tell user the follow was successful
-        return redirect(url_for("home"))                            # Redirect to home
+        my_user.followed.append(friend_user)
+        db.session.commit()
+        flash("User followed successfully")
+        return redirect(url_for("home"))
     # If user is trying to follow an account that does not exist
-    flash("The username you are trying to follow does not exist")   # Tell user friend doesnt exist
-    return redirect(url_for("home"))                                # Redirect to home
+    flash("The username you are trying to follow does not exist")
+    return redirect(url_for("home"))
 
 
 ### Allow user to unfollow other users ###
 @app.route("/unfollow/<username>", methods=["GET", "POST"])
 @login_required
 def unfollow(username):
-    friend_user = User.query.filter_by(username= username).first()                  # Fetch friends User object from user input
-    my_user = db.session.get(User, session["user_id"])                                    # Fetch users id
+    friend_user = User.query.filter_by(username= username).first()
+    my_user = db.session.get(User, session["user_id"])
 
     # Check if friends User exists
     if friend_user:
         # Make sure account does not belong to user
         if friend_user.id == session["user_id"]:
-            flash("That username is associated with your account")                  # Tell user they cannot unfollow themselves
-            return redirect(url_for("home"))                                        # Redirect to home
+            flash("That username is associated with your account")
+            return redirect(url_for("home"))
         # Make sure user is already following friend
         if my_user.followed.filter_by(id=friend_user.id).first() is None:
-            flash("You do not follow this user")                                    # Tell user they do not follow the user
-            return redirect(url_for("home"))                                        # Redirect to home
+            flash("You do not follow this user")
+            return redirect(url_for("home"))
         # If user makes valid attempt to unfollow friend
-        my_user.followed.remove(friend_user)                                # Remove friend from users followed list in database
-        db.session.commit()                                                 # Make database change official
-        flash("User unfollowed successfully")                               # Tell user they have successfully unfollowed friend
-        return redirect(url_for("home"))                                    # Redirect to home
+        my_user.followed.remove(friend_user)
+        db.session.commit()
+        flash("User unfollowed successfully")
+        return redirect(url_for("home"))
     # If user is trying to unfollow account that does not exist
-    flash("The user you are trying to unfollow does not exist")             # Tell user friend doesnt exist
-    return redirect(url_for("home"))                                        # Redirect to home
+    flash("The user you are trying to unfollow does not exist")
+    return redirect(url_for("home"))
 
 
 ### Create a dashboard that displays friends habits
@@ -356,8 +356,8 @@ def profile(username):
 ### Create /logout page and functionality ###
 @app.route("/logout", methods=["GET"])
 def logout():
-    session.pop("user_id", None)                            # Remove user credentials (will require log in next time)
-    return redirect(url_for("login"))                       # Redirect user to login page
+    session.pop("user_id", None)
+    return redirect(url_for("login"))
 
 
 
